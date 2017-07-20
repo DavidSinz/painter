@@ -1,7 +1,79 @@
 import Tkinter
 
 from PIL import ImageTk
-from tkinter import *
+from Tkinter import *
+from PIL import ImageGrab
+
+class Button(object):
+	width, height, padx, pady = 0, 0, 0, 0
+
+	def __init__(self, root, width, height, padx, pady):
+		self.width = width
+		self.height = height
+		self.padx = padx
+		self.pady = pady
+
+class ColorButton(Button):
+	def __init__(self, painter, root, width, height, padx, pady, color):
+		Button.__init__(self, root, width, height, padx, pady)
+		self.painter = painter
+		self.color = color
+		self.TkBut = Tkinter.Button(root, command=self.button_event, width=width, height=height, bg=color)
+		self.TkBut.pack(padx=padx, pady=pady, side=LEFT)
+	
+	def button_event(self):
+		self.painter.pencil_color = self.color
+
+class ToolButton(Button):
+	def __init__(self, painter, drawing_area, root, width, height, padx, pady, tool, img):
+		Button.__init__(self, root, width, height, padx, pady)
+		self.painter = painter
+		self.drawing_area = drawing_area
+		self.tool = tool
+		self.TkBut = Tkinter.Button(root, command=self.button_event, width=width, height=height, bg="white")
+		self.TkBut.config(image=img)
+		self.TkBut.image = img
+		self.TkBut.pack(padx=padx, pady=pady, side=LEFT)
+	
+	def button_event(self):
+		if self.tool == "delete":
+			self.drawing_area.delete("all")
+		else:
+			self.painter.drawing_tool = self.tool
+
+class LineWidthButton(Button):
+	def __init__(self, painter, root, width, height, padx, pady, lineWidth):
+		Button.__init__(self, root, width, height, padx, pady)
+		self.painter = painter
+		self.lineWidth = lineWidth
+		self.TkBut = Tkinter.Button(root, text=lineWidth, command=self.button_event, width=width, height=height, bg="white")
+		self.TkBut.pack(padx=padx, pady=pady, side=LEFT)
+	
+	def button_event(self):
+		if self.lineWidth == "duenn":
+			self.painter.pencil_line_width = 1
+		if self.lineWidth == "mittel":
+			self.painter.pencil_line_width = 10
+		if self.lineWidth == "dick":
+			self.painter.pencil_line_width = 20
+
+class SaveButton(Button):
+	i = 1
+	
+	def __init__(self, drawing_area, root, width, height, padx, pady):
+		Button.__init__(self, root, width, height, padx, pady)
+		self.drawing_area = drawing_area
+		self.root = root
+		self.TkBut = Tkinter.Button(root, text="speichern", command=self.button_event, width=width, height=height, bg="white")
+		self.TkBut.pack(padx=padx, pady=pady, side=LEFT)
+	
+	def button_event(self):
+		x=self.root.winfo_rootx()+self.drawing_area.winfo_x()
+		y=self.root.winfo_rooty()+self.drawing_area.winfo_y()
+		x1=x+self.drawing_area.winfo_width()
+		y1=y+self.drawing_area.winfo_height()
+		ImageGrab.grab().crop((x,y,x1,y1)).save("save" + str(self.i) + ".jpg")
+		self.i = self.i + 1
 
 class Painter:
     drawing_tool = "pencil"
@@ -9,54 +81,16 @@ class Painter:
     pencil_line_width = 1
     but_pressed = False
     x_pos, y_pos = None, None
+    d = []
 
     x1, y1, x2, y2 = None, None, None, None
 
-    def change_pencil_black(self):
-        self.pencil_color = "black"
-
-    def change_pencil_white(self):
-        self.pencil_color = "white"
-
-    def change_pencil_red(self):
-        self.pencil_color = "red"
-
-    def change_pencil_blue(self):
-        self.pencil_color = "blue"
-
-    def change_pencil_green(self):
-        self.pencil_color = "green"
-
-    def change_pencil_yellow(self):
-        self.pencil_color = "yellow"
-
-    def change_pen(self):
-        self.drawing_tool = "pencil"
-
-    def change_line(self):
-        self.drawing_tool = "line"
-
-    def change_duenn(self):
-        self.pencil_line_width = 1
-
-    def change_mittel(self):
-        self.pencil_line_width = 10
-
-    def change_dick(self):
-        self.pencil_line_width = 20
-
-    def change_circle(self):
-        self.drawing_tool = "circle"
-
-    def change_rect(self):
-        self.drawing_tool = "rect"
-
-    def change_eraser(self):
-        self.drawing_tool = "eraser"
+    tool_names = ["pencil", "line", "circle", "rect", "eraser", "delete"]
+    color_codes = ["#000000", "#808080", "#C0C0C0", "#FFFFFF", "#800000", "#FF0000", "#808000", "#FFFF00", "#008000", "#00FF00", "#008080", "#00FFFF", "#000080", "#0000FF", "#800080", "#FF00FF"]
+    line_widths = ["duenn", "mittel", "dick"]
 
     def button_pressed(self, event=None):
         self.but_pressed = True
-
         self.x1, self.y1 = event.x, event.y
 
     def button_released(self, event=None):
@@ -85,15 +119,15 @@ class Painter:
 
     def line_draw(self,event=None):
         if (self.x1,self.y1,self.x2,self.y2) != None:
-            event.widget.create_line(self.x1,self.y1,self.x2,self.y2,width=self.pencil_line_width, smooth = True, fill=self.pencil_color)
+            self.d.append(event.widget.create_line(self.x1,self.y1,self.x2,self.y2,width=self.pencil_line_width, smooth = True, fill=self.pencil_color))
 
     def circle_draw(self, event=None):
         if (self.x1, self.y1, self.x2, self.y2) != None:
-            event.widget.create_oval(self.x1, self.y1, self.x2, self.y2, width=30, fill=self.pencil_color, outline=self.pencil_color)
+            self.d.append(event.widget.create_oval(self.x1, self.y1, self.x2, self.y2, width=30, fill=self.pencil_color, outline=self.pencil_color))
 
     def rectangle_draw(self, event=None):
         if (self.x1, self.y1, self.x2, self.y2) != None:
-            event.widget.create_rectangle(self.x1, self.y1, self.x2, self.y2, width = 30, fill=self.pencil_color, outline=self.pencil_color)
+            self.d.append(event.widget.create_rectangle(self.x1, self.y1, self.x2, self.y2, width = 30, fill=self.pencil_color, outline=self.pencil_color))
 
     def eraser_draw(self, event=None):
         if self.but_pressed:
@@ -102,67 +136,30 @@ class Painter:
 
             self.x_pos, self.y_pos = event.x, event.y
 
+    x = 1
+
+    def init_buttons(self, drawing_area):
+        for i in range(6):
+            ToolButton(self, drawing_area, root, 50, 50, 2, 2, self.tool_names[i], ImageTk.PhotoImage(file=self.tool_names[i]+".png"))
+        for i in range(3):
+            LineWidthButton(self, root, 5, 3, 2, 2, self.line_widths[i])
+        SaveButton(drawing_area, root, 5, 3, 2, 2)
+        def func_undo():
+            drawing_area.delete(self.d[len(self.d) - self.x])
+            self.x = self.x +1
+        def func_redo():
+            print str(self.d[len(self.d) - 1])
+        undo = Tkinter.Button(root, text="undo", command=func_undo, width=5, height=3, bg="white")
+        undo.pack(padx=2, pady=2, side=LEFT)
+        redo = Tkinter.Button(root, text="redo", command=func_redo, width=5, height=3, bg="white")
+        redo.pack(padx=2, pady=2, side=LEFT)
+        for i in range(16):
+            ColorButton(self, root, 2, 1, 2, 2, self.color_codes[i])
 
     def __init__(self,root):
         drawing_area = Canvas(root,height=600,width=600,bg="white")
         drawing_area.pack()
-
-        def delete_canvas():
-            drawing_area.delete("all")
-
-        img_rect = ImageTk.PhotoImage(file="rect.png")
-        img_circle = ImageTk.PhotoImage(file="circle.png")
-        img_line = ImageTk.PhotoImage(file="line.png")
-        img_pencil = ImageTk.PhotoImage(file="pencil.png")
-        img_eraser = ImageTk.PhotoImage(file="eraser.png")
-        img_delete = ImageTk.PhotoImage(file="delete.png")
-
-        pencil = Tkinter.Button(root, command=self.change_pen, width=50, height=50, bg="white")
-        pencil.config(image=img_pencil)
-        pencil.image = img_pencil
-        pencil.pack(padx=20, pady=20, side=LEFT)
-        line = Tkinter.Button(root, command=self.change_line, width=50, height=50, bg="white")
-        line.config(image=img_line)
-        line.image = img_line
-        line.pack(padx=20, pady=20, side=LEFT)
-
-        delete_all = Tkinter.Button(root, command=delete_canvas, width=50, height=50, bg="white")
-        delete_all.config(image=img_delete)
-        delete_all.image = img_delete
-        delete_all.pack(padx=20, pady=20, side=LEFT)
-
-        duenn = Tkinter.Button(root,text="duenn", command=self.change_duenn, width=5, height=2, bg="white")
-        duenn.pack(padx=20, pady=20, side=LEFT)
-        mittel = Tkinter.Button(root, text="mittel", command=self.change_mittel, width=5, height=2, bg="white")
-        mittel.pack(padx=20, pady=20, side=LEFT)
-        dick = Tkinter.Button(root, text="dick", command=self.change_dick, width=5, height=2, bg="white")
-        dick.pack(padx=20, pady=20, side=LEFT)
-
-        eraser = Tkinter.Button(root, command=self.change_eraser,width=50,height=50, bg="white")
-        eraser.config(image=img_eraser)
-        eraser.image = img_eraser
-        eraser.pack(padx=20, pady=20, side=LEFT)
-        circle = Tkinter.Button(root, command=self.change_circle, width=50, height=50, bg="white")
-        circle.config(image=img_circle)
-        circle.image = img_circle
-        circle.pack(padx=20, pady=20, side=LEFT)
-        rect = Tkinter.Button(root, command=self.change_rect, width=50, height=50, bg="white")
-        rect.config(image=img_rect)
-        rect.image = img_rect
-        rect.pack(padx=20, pady=20, side=LEFT)
-        black = Tkinter.Button(root, command=self.change_pencil_black, width=5, height=2, bg="black")
-        black.pack(padx=20, pady=20, side=LEFT)
-        white = Tkinter.Button(root, command=self.change_pencil_white, width=5, height=2, bg="white")
-        white.pack(padx=20, pady=40, side=LEFT)
-        red = Tkinter.Button(root, command=self.change_pencil_red, width=5, height=2, bg="red")
-        red.pack(padx=20, pady=40, side=LEFT)
-        blue = Tkinter.Button(root, command=self.change_pencil_blue, width=5, height=2, bg="blue")
-        blue.pack(padx=20, pady=20, side=LEFT)
-        green = Tkinter.Button(root, command=self.change_pencil_green, width=5, height=2, bg="green")
-        green.pack(padx=20, pady=20, side=LEFT)
-        yellow = Tkinter.Button(root, command=self.change_pencil_yellow, width=5, height=2, bg="yellow")
-        yellow.pack(padx=20, pady=20, side=LEFT)
-
+        self.init_buttons(drawing_area)
         drawing_area.bind("<Motion>",self.move)
         drawing_area.bind("<ButtonPress-1>", self.button_pressed)
         drawing_area.bind("<ButtonRelease-1>", self.button_released)
