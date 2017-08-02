@@ -42,10 +42,11 @@ class ToolButton(Button):
 		self.TkBut.config(image=img)
 		self.TkBut.image = img
 		self.TkBut.grid(column=ToolButton.colIdx, row=ToolButton.rowIdx)
-		ToolButton.rowIdx += 1
-		if ToolButton.rowIdx == 5:
+		if ToolButton.colIdx == 20:
+			ToolButton.colIdx = 18
+			ToolButton.rowIdx += 1
+		else:
 			ToolButton.colIdx += 2
-			ToolButton.rowIdx = 1
 	
 	def button_event(self):
 		if self.tool == "delete":
@@ -75,8 +76,8 @@ class LineWidthController(object):
 	
 	def __init__(self, painter, root):
 		self.painter = painter
-		self.scale = Scale(root, command=self.scale_event, width=40, fr=1, to=20, label="Strichstaerke", cursor="hand2")
-		self.scale.grid(column=18,row=6,columnspan=3)
+		self.scale = Scale(root, command=self.scale_event, width=40, fr=1, to=20, label="Strichstaerke:", cursor="hand2", orient="horizontal", length=120)
+		self.scale.grid(column=18,row=5,columnspan=3)
 
 	def scale_event(self, size):
 		self.painter.pencil_line_width = size
@@ -164,14 +165,14 @@ class Painter:
         for i in range(len(self.tool_names)):
             ToolButton(self, drawing_area, root, 50, 50, 2, 2, self.tool_names[i], ImageTk.PhotoImage(file="img/"+self.tool_names[i]+".png"))
         for i in range(len(self.color_codes)):
-            ColorButton(self, root, 2, 1, 2, 2, self.color_codes[i])
+            ColorButton(self, root, 3, 1, 2, 2, self.color_codes[i])
         LineWidthController(self, root)
 
     def init_grid_placeholders(self):
         Frame(root, height=20, width=40).grid(column=0, row=0)
         Frame(root, height=20, width=20).grid(column=17, row=0)
         Frame(root, height=20, width=20).grid(column=0, row=12)
-        Frame(root, height=10, width=10).grid(column=19, row=0)
+        Frame(root, height=10, width=20).grid(column=19, row=0)
 
     def __init__(self,root):
         drawing_area = self.init_drawing_area()
