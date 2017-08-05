@@ -52,11 +52,13 @@ class ToolButton(Button):
 		if self.tool == "delete":
 			self.drawing_area.delete("all")
 		elif self.tool == "save":
+			# Quelle: Anfang https://stackoverflow.com/questions/9886274/how-can-i-convert-canvas-content-to-an-image
 			x=self.root.winfo_rootx()+self.drawing_area.winfo_x()
 			y=self.root.winfo_rooty()+self.drawing_area.winfo_y()
 			x1=x+self.drawing_area.winfo_width()
 			y1=y+self.drawing_area.winfo_height()
 			ImageGrab.grab().crop((x,y,x1,y1)).save("save" + str(self.saveIndex) + ".jpg")
+			# Quelle: Ende
 			self.saveIndex = self.saveIndex + 1
 		elif self.tool == "undo":
 			if len(self.painter.cv_elements) > 0:
